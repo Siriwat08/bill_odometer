@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เผ่าปัญญา ทรานสปอร์ต</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- (CSS ทั้งหมดเหมือนเดิมครับ) --- */
+        :root {
+            --primary-color: #06C755; --secondary-color: #4A90E2; --warning-color: #f5a623; --danger-color: #D0021B; --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #333333; --text-light-color: #777; --border-color: #e0e0e0;
+        }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; }
+        .hidden { display: none !important; }
+        #app-header { background-color: var(--primary-color); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #header-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        #user-profile-picture { width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; }
+        #main-content { padding: 1rem; }
+        .card { background-color: var(--card-bg); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
+        .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+        form { display: flex; flex-direction: column; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: 500; margin-bottom: 0.25rem; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 1rem; box-sizing: border-box; }
+        .btn { width: 100%; padding: 1rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s; }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-warning { background-color: var(--warning-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        #loading-view { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: var(--card-bg); z-index: 999; padding: 1rem; box-sizing: border-box; }
+        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: var(--primary-color); animation: spin 1s linear infinite; }
+        #loading-text { margin-top: 1rem; font-weight: 500; text-align: center; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #custom-alert-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        #custom-alert-box { background-color: white; padding: 2rem; border-radius: 12px; text-align: center; width: 80%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #custom-alert-title { margin-top: 0; font-size: 1.25rem; font-weight: 700; }
+        #custom-alert-message { font-size: 1rem; color: var(--text-light-color); margin-bottom: 1.5rem; }
+        #custom-alert-close-btn { width: 100%; padding: 0.75rem; font-weight: 500; }
+        .image-preview { width: 100%; max-width: 300px; height: auto; border: 1px dashed var(--border-color); border-radius: 6px; margin-top: 0.5rem; display: none; }
+    
+        /* --- (สไตล์ใหม่สำหรับ Dashboard) --- */
+        .summary-box {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            margin-bottom: 1rem;
+        }
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .summary-label {
+            font-size: 1rem;
+            color: var(--text-light-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- ======================= โครงสร้างหลักของแอป ======================= -->
+    <div id="app-container" class="hidden">
+        <header id="app-header">
+            <div>
+                <h1 id="header-title">เผ่าปัญญา</h1>
+                <p id="user-display-name" style="font-size: 0.875rem; margin:0;"></p>
+            </div>
+            <img id="user-profile-picture" src="https://placehold.co/100x100/eeeeee/cccccc?text=User">
+        </header>
+        <main id="main-content">
+            <div id="view-container">
+                
+                <!-- ===== View 1: Registration (ซ่อนไว้ก่อน) ===== -->
+                <div id="registration-view" class="card hidden">
+                    <h2 class="card-title">ลงทะเบียนพนักงาน</h2>
+                    <form id="registration-form">
+                        <p>ดูเหมือนว่าคุณยังไม่ได้ลงทะเบียน กรุณากรอกข้อมูลเพื่อเริ่มใช้งานครับ</p>
+                        <div class="form-group">
+                            <label for="reg-name">ชื่อ - นามสกุล</label>
+                            <input type="text" id="reg-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-license-plate">ทะเบียนรถ</label>
+                            <input type="text" id="reg-license-plate" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">ลงทะเบียน</button>
+                    </form>
+                </div>
+
+                <!-- ===== (เพิ่ม) View 2: Dashboard (ซ่อนไว้ก่อน) ===== -->
+                <div id="dashboard-view" class="card hidden">
+                    <h2 class="card-title">สรุปข้อมูล (เดือนนี้)</h2>
+                    <div class="summary-box">
+                        <div id="total-price" class="summary-value">...</div>
+                        <div class="summary-label">ยอดเติมน้ำมัน (บาท)</div>
+                    </div>
+                    <div class="summary-box">
+                        <div id="total-kms" class="summary-value">...</div>
+                        <div class="summary-label">ระยะทางที่ใช้ (กม.)</div>
+                    </div>
+                    <button id="go-to-log-btn" class="btn btn-primary">บันทึกข้อมูลการเติมน้ำมัน</button>
+                </div>
+                
+                <!-- ===== View 3: Fuel Log (ซ่อนไว้ก่อน) ===== -->
+                <div id="fuel-log-view" class="card hidden">
+                    <!-- (เพิ่มปุ่ม "ย้อนกลับ" ที่นี่) -->
+                    <button id="back-to-dashboard-btn" class="btn btn-warning" style="margin-bottom: 1rem;"> ❮ กลับหน้าสรุปยอด</button>
+                    
+                    <h2 class="card-title">บันทึกการเติมน้ำมัน</h2>
+                    <form id="fuel-log-form">
+                        <div class="form-group">
+                            <label for="log-price">ราคา (บาท)</label>
+                            <input type="number" id="log-price" inputmode="decimal" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="log-odometer">เลขไมล์รถยนต์ (กม.)</label>
+                            <input type="number" id="log-odometer" inputmode="numeric" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="log-bill-image">รูปถ่ายบิลน้ำมัน</label>
+                            <input type="file" id="log-bill-image" accept="image/*" required>
+                            <img id="bill-preview" class="image-preview" alt="ตัวอย่างบิล">
+                        </div>
+                        <div class="form-group">
+                            <label for="log-odometer-image">รูปถ่ายเลขไมล์รถยนต์</label>
+                            <input type="file" id="log-odometer-image" accept="image/*" required>
+                            <img id="odometer-preview" class="image-preview" alt="ตัวอย่างเลขไมล์">
+                        </div>
+                        <button type="submit" id="submit-log-btn" class="btn btn-secondary">บันทึกข้อมูล</button>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ======================= ส่วนประกอบพิเศษ ======================= -->
+    <div id="loading-view"><div class="spinner"></div><p id="loading-text">กำลังโหลด...</p></div>
+    <div id="custom-alert-overlay" class="hidden">
+        <div id="custom-alert-box">
+            <h3 id="custom-alert-title"></h3>
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-close-btn" class="btn"></button>
+        </div>
+    </div>
+    
+    <script>
+        // ==========================================================
+        //               JAVASCRIPT LOGIC (v2)
+        // ==========================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            // --- *** ใส่ค่าของคุณที่นี่ (เหมือนเดิม) *** ---
+            const LIFF_ID = 'ใส่_LIFF_ID_ของคุณที่นี่'; 
+            const GAS_WEB_APP_URL = 'AKfycbwTRFqg_FjYaN1RGy-LRpbv-QSqyb8GEQV6wNnJH6MKv-D0AIgdqNFJF4hpWCAnLZYs';
+            // --- *********************** ---
+
+            let liffProfile = {};
+            let employeeData = {}; 
+
+            const dom = {
+                app: document.getElementById('app-container'),
+                loadingView: document.getElementById('loading-view'),
+                loadingText: document.getElementById('loading-text'),
+                header: {
+                    displayName: document.getElementById('user-display-name'),
+                    picture: document.getElementById('user-profile-picture')
+                },
+                views: {
+                    registration: document.getElementById('registration-view'),
+                    dashboard: document.getElementById('dashboard-view'), // (เพิ่ม)
+                    fuelLog: document.getElementById('fuel-log-view')
+                },
+                regForm: {
+                    form: document.getElementById('registration-form'),
+                    name: document.getElementById('reg-name'),
+                    licensePlate: document.getElementById('reg-license-plate')
+                },
+                // (เพิ่ม)
+                dashboard: { 
+                    totalPrice: document.getElementById('total-price'),
+                    totalKms: document.getElementById('total-kms'),
+                    goToLogBtn: document.getElementById('go-to-log-btn')
+                },
+                logForm: {
+                    form: document.getElementById('fuel-log-form'),
+                    backBtn: document.getElementById('back-to-dashboard-btn'), // (เพิ่ม)
+                    price: document.getElementById('log-price'),
+                    odometer: document.getElementById('log-odometer'),
+                    billImage: document.getElementById('log-bill-image'),
+                    odometerImage: document.getElementById('log-odometer-image'),
+                    billPreview: document.getElementById('bill-preview'),
+                    odometerPreview: document.getElementById('odometer-preview'),
+                    submitBtn: document.getElementById('submit-log-btn')
+                }
+            };
+            
+            // --- MAIN LOGIC ---
+            (async function main() {
+                try {
+                    dom.loadingText.textContent = 'กำลังเริ่มต้น...';
+                    await liff.init({ liffId: LIFF_ID });
+                    if (!liff.isLoggedIn()) { liff.login(); return; }
+                    
+                    liffProfile = await liff.getProfile();
+                    dom.header.displayName.textContent = liffProfile.displayName;
+                    dom.header.picture.src = liffProfile.pictureUrl;
+
+                    dom.loadingText.textContent = 'กำลังตรวจสอบข้อมูลพนักงาน...';
+                    const userData = await serverCall('getUserData', liffProfile.userId);
+                    
+                    if (userData.status === 'found') {
+                        employeeData = userData.employee; 
+                        showView('dashboard'); // (เปลี่ยน) แสดง Dashboard
+                        await loadDashboardData(); // (เพิ่ม) โหลดข้อมูลสรุป
+                    } else {
+                        showView('registration'); // แสดงหน้าลงทะเบียน (เหมือนเดิม)
+                    }
+                    
+                    dom.app.classList.remove('hidden');
+                    dom.loadingView.classList.add('hidden');
+
+                } catch (error) { 
+                    showCustomAlert('เกิดข้อผิดพลาดรุนแรง', error.message, false);
+                    dom.loadingView.classList.add('hidden');
+                    console.error(error); 
+                }
+            })();
+
+            // --- ฟังก์ชัน "หัวใจ" ในการสื่อสารกับ Backend (เหมือนเดิม) ---
+            function serverCall(action, ...args) {
+                const url = GAS_WEB_APP_URL; 
+                const payload = { action: action, args: args };
+                return fetch(url, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload), 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    mode: 'cors'
+                })
+                .then(response => { if (!response.ok) throw new Error('Network response was not ok'); return response.json(); })
+                .then(data => { if (data.status === 'error') throw new Error(data.message); return data.response; });
+            }
+
+            // --- ฟังก์ชันจัดการการแสดงผลหน้าจอ ---
+            function showView(viewName) {
+                Object.values(dom.views).forEach(view => view.classList.add('hidden'));
+                if (dom.views[viewName]) {
+                    dom.views[viewName].classList.remove('hidden');
+                }
+            }
+
+            // --- (เพิ่ม) ฟังก์ชันโหลดข้อมูล Dashboard ---
+            async function loadDashboardData() {
+                dom.dashboard.totalPrice.textContent = '...';
+                dom.dashboard.totalKms.textContent = '...';
+                try {
+                    const summary = await serverCall('getMonthlySummary', liffProfile.userId);
+                    dom.dashboard.totalPrice.textContent = summary.totalPrice.toLocaleString('th-TH') || '0';
+                    dom.dashboard.totalKms.textContent = summary.totalKms.toLocaleString('th-TH') || '0';
+                } catch (error) {
+                    dom.dashboard.totalPrice.textContent = 'Error';
+                    dom.dashboard.totalKms.textContent = 'Error';
+                    showCustomAlert('โหลดข้อมูลสรุปไม่สำเร็จ', error.message, false);
+                }
+            }
+            
+            // --- จัดการการลงทะเบียน ---
+            dom.regForm.form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = dom.regForm.name.value.trim();
+                const licensePlate = dom.regForm.licensePlate.value.trim();
+                
+                if (!name || !licensePlate) {
+                    showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกชื่อและทะเบียนรถ', false);
+                    return;
+                }
+                
+                dom.loadingText.textContent = 'กำลังลงทะเบียน...';
+                dom.loadingView.classList.remove('hidden');
+
+                try {
+                    const result = await serverCall('registerUser', liffProfile.userId, name, licensePlate);
+                    employeeData = result.employee; 
+                    showView('dashboard'); // (เปลี่ยน) สลับไปหน้า Dashboard
+                    await loadDashboardData(); // (เพิ่ม) โหลดข้อมูลสรุปครั้งแรก
+                    dom.loadingView.classList.add('hidden');
+                } catch (error) {
+                    dom.loadingView.classList.add('hidden');
+                    showCustomAlert('ลงทะเบียนไม่สำเร็จ', error.message, false);
+                }
+            });
+
+            // --- (เพิ่ม) ปุ่มนำทางจาก Dashboard ไปหน้า Log ---
+            dom.dashboard.goToLogBtn.addEventListener('click', () => {
+                showView('fuelLog');
+            });
+
+            // --- (เพิ่ม) ปุ่มย้อนกลับจากหน้า Log ไป Dashboard ---
+            dom.logForm.backBtn.addEventListener('click', () => {
+                showView('dashboard');
+            });
+
+            // --- จัดการการบันทึกข้อมูลน้ำมัน ---
+            dom.logForm.form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // (Logic การตรวจสอบข้อมูลเหมือนเดิม)
+                const price = dom.logForm.price.value;
+                const odometer = dom.logForm.odometer.value;
+                const billFile = dom.logForm.billImage.files[0];
+                const odometerFile = dom.logForm.odometerImage.files[0];
+                if (!price || !odometer || !billFile || !odometerFile) {
+                    showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลและแนบรูปภาพให้ครบถ้วน', false);
+                    return;
+                }
+                dom.logForm.submitBtn.disabled = true;
+                dom.loadingText.textContent = 'กำลังบันทึกข้อมูล...';
+                dom.loadingView.classList.remove('hidden');
+
+                try {
+                    const billImageBase64 = await readFileAsBase64(billFile);
+                    const odometerImageBase64 = await readFileAsBase64(odometerFile);
+                    
+                    const logData = {
+                        userId: liffProfile.userId,
+                        name: employeeData.name,
+                        licensePlate: employeeData.licensePlate,
+                        price: price,
+                        odometer: odometer,
+                        billImageBase64: billImageBase64,
+                        odometerImageBase64: odometerImageBase64
+                    };
+                    await serverCall('submitFuelLog', logData);
+                    
+                    dom.loadingView.classList.add('hidden');
+                    // (เปลี่ยน) แจ้งเตือน และตั้งค่าให้พอกด "ตกลง" หรือครบ 3 วิ แล้วกลับไปหน้า Dashboard
+                    showCustomAlert('บันทึกสำเร็จ', 'บันทึกข้อมูลการเติมน้ำมันเรียบร้อยแล้ว', true, 3); 
+                    
+                } catch (error) {
+                    dom.loadingView.classList.add('hidden');
+                    dom.logForm.submitBtn.disabled = false;
+                    showCustomAlert('บันทึกไม่สำเร็จ', error.message, false);
+                }
+            });
+
+            // --- ฟังก์ชันผู้ช่วย: อ่านไฟล์เป็น Base64 (เหมือนเดิม) ---
+            function readFileAsBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+            
+            // --- ฟังก์ชันผู้ช่วย: แสดงตัวอย่างรูปภาพ (เหมือนเดิม) ---
+            function setupImagePreview(inputId, previewId) {
+                document.getElementById(inputId).addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    const preview = document.getElementById(previewId);
+                    if (file) {
+                        preview.src = URL.createObjectURL(file);
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                });
+            }
+            setupImagePreview('log-bill-image', 'bill-preview');
+            setupImagePreview('log-odometer-image', 'odometer-preview');
+
+            // --- (อัปเดต) ฟังก์ชันจัดการ Popup Alert ---
+            let countdownInterval;
+            function showCustomAlert(title, message, isSuccess = false, countdownSeconds = 3) {
+                const overlay = document.getElementById('custom-alert-overlay');
+                const titleEl = document.getElementById('custom-alert-title');
+                const messageEl = document.getElementById('custom-alert-message');
+                const closeBtn = document.getElementById('custom-alert-close-btn');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                overlay.classList.remove('hidden');
+                clearInterval(countdownInterval);
+                closeBtn.className = 'btn';
+
+                if (isSuccess) {
+                    closeBtn.classList.add('btn-primary');
+                    let countdown = countdownSeconds;
+                    closeBtn.textContent = `ตกลง (ปิดใน ${countdown} วิ)`;
+                    countdownInterval = setInterval(() => {
+                        countdown--;
+                        if (countdown > 0) {
+                            closeBtn.textContent = `ตกลง (ปิดใน ${countdown} วิ)`;
+                        } else {
+                            handleSuccessAction(); // (เปลี่ยน) เรียกฟังก์ชันเฉพาะเมื่อสำเร็จ
+                        }
+                    }, 1000);
+                    closeBtn.onclick = handleSuccessAction; // (เปลี่ยน)
+                } else {
+                    closeBtn.classList.add('btn-warning');
+                    closeBtn.textContent = 'ตกลง';
+                    closeBtn.onclick = () => { // ถ้า Error ให้แค่ปิด Popup
+                        overlay.classList.add('hidden');
+                    };
+                }
+            }
+
+            // (เพิ่ม) ฟังก์ชันที่ทำงานหลังจากบันทึกสำเร็จ
+            function handleSuccessAction() {
+                clearInterval(countdownInterval);
+                document.getElementById('custom-alert-overlay').classList.add('hidden');
+                
+                // เคลียร์ฟอร์ม
+                dom.logForm.form.reset();
+                dom.logForm.billPreview.style.display = 'none';
+                dom.logForm.odometerPreview.style.display = 'none';
+                dom.logForm.submitBtn.disabled = false;
+
+                // กลับไปหน้า Dashboard และ โหลดข้อมูลใหม่
+                showView('dashboard');
+                loadDashboardData();
+            }
+        });
+    </script>
+</body>
+</html>
+
