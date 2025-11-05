@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- (CSS ทั้งหมดเหมือนเดิมครับ) --- */
         :root {
             --primary-color: #06C755; --secondary-color: #4A90E2; --warning-color: #f5a623; --danger-color: #D0021B; --bg-color: #f0f2f5; --card-bg: #ffffff; --text-color: #333333; --text-light-color: #777; --border-color: #e0e0e0;
         }
@@ -41,28 +40,37 @@
         #custom-alert-message { font-size: 1rem; color: var(--text-light-color); margin-bottom: 1.5rem; }
         #custom-alert-close-btn { width: 100%; padding: 0.75rem; font-weight: 500; }
         .image-preview { width: 100%; max-width: 300px; height: auto; border: 1px dashed var(--border-color); border-radius: 6px; margin-top: 0.5rem; display: none; }
-    
-        /* --- (สไตล์ใหม่สำหรับ Dashboard) --- */
-        .summary-box {
-            text-align: center;
-            padding: 1rem;
-            border-radius: 8px;
+        .summary-box { text-align: center; padding: 1rem; border-radius: 8px; background-color: var(--bg-color); margin-bottom: 1rem; }
+        .summary-value { font-size: 2rem; font-weight: 700; color: var(--primary-color); }
+        .summary-label { font-size: 1rem; color: var(--text-light-color); }
+
+        /* ★★★ CSS สำหรับตารางประวัติ ★★★ */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+        .history-table th, .history-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            text-align: left;
+            word-break: break-word;
+        }
+        .history-table th {
             background-color: var(--bg-color);
-            margin-bottom: 1rem;
+            font-weight: 500;
         }
-        .summary-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
+        #history-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        .summary-label {
-            font-size: 1rem;
-            color: var(--text-light-color);
+        .text-right {
+            text-align: right !important;
         }
     </style>
 </head>
 <body>
-    <!-- ======================= โครงสร้างหลักของแอป ======================= -->
     <div id="app-container" class="hidden">
         <header id="app-header">
             <div>
@@ -73,8 +81,6 @@
         </header>
         <main id="main-content">
             <div id="view-container">
-                
-                <!-- ===== View 1: Registration (ซ่อนไว้ก่อน) ===== -->
                 <div id="registration-view" class="card hidden">
                     <h2 class="card-title">ลงทะเบียนพนักงาน</h2>
                     <form id="registration-form">
@@ -91,7 +97,6 @@
                     </form>
                 </div>
 
-                <!-- ===== (เพิ่ม) View 2: Dashboard (ซ่อนไว้ก่อน) ===== -->
                 <div id="dashboard-view" class="card hidden">
                     <h2 class="card-title">สรุปข้อมูล (เดือนนี้)</h2>
                     <div class="summary-box">
@@ -103,13 +108,13 @@
                         <div class="summary-label">ระยะทางที่ใช้ (กม.)</div>
                     </div>
                     <button id="go-to-log-btn" class="btn btn-primary">บันทึกข้อมูลการเติมน้ำมัน</button>
+                    
+                    <!-- ★★★ พื้นที่สำหรับแสดงตารางประวัติ ★★★ -->
+                    <div id="history-container"></div>
                 </div>
                 
-                <!-- ===== View 3: Fuel Log (ซ่อนไว้ก่อน) ===== -->
                 <div id="fuel-log-view" class="card hidden">
-                    <!-- (เพิ่มปุ่ม "ย้อนกลับ" ที่นี่) -->
                     <button id="back-to-dashboard-btn" class="btn btn-warning" style="margin-bottom: 1rem;"> ❮ กลับหน้าสรุปยอด</button>
-                    
                     <h2 class="card-title">บันทึกการเติมน้ำมัน</h2>
                     <form id="fuel-log-form">
                         <div class="form-group">
@@ -133,12 +138,10 @@
                         <button type="submit" id="submit-log-btn" class="btn btn-secondary">บันทึกข้อมูล</button>
                     </form>
                 </div>
-
             </div>
         </main>
     </div>
 
-    <!-- ======================= ส่วนประกอบพิเศษ ======================= -->
     <div id="loading-view"><div class="spinner"></div><p id="loading-text">กำลังโหลด...</p></div>
     <div id="custom-alert-overlay" class="hidden">
         <div id="custom-alert-box">
@@ -149,15 +152,10 @@
     </div>
     
     <script>
-        // ==========================================================
-        //               JAVASCRIPT LOGIC (v2)
-        // ==========================================================
         window.addEventListener('DOMContentLoaded', () => {
-            // --- *** ใส่ค่าของคุณที่นี่ (เหมือนเดิม) *** ---
             const LIFF_ID = '2008420088-VoD4OwMx'; 
             const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwTRFqg_FjYaN1RGy-LRpbv-QSqyb8GEQV6wNnJH6MKv-D0AIgdqNFJF4hpWCAnLZYs/exec';
-            // --- *********************** ---
-
+            
             let liffProfile = {};
             let employeeData = {}; 
 
@@ -171,7 +169,7 @@
                 },
                 views: {
                     registration: document.getElementById('registration-view'),
-                    dashboard: document.getElementById('dashboard-view'), // (เพิ่ม)
+                    dashboard: document.getElementById('dashboard-view'),
                     fuelLog: document.getElementById('fuel-log-view')
                 },
                 regForm: {
@@ -179,7 +177,6 @@
                     name: document.getElementById('reg-name'),
                     licensePlate: document.getElementById('reg-license-plate')
                 },
-                // (เพิ่ม)
                 dashboard: { 
                     totalPrice: document.getElementById('total-price'),
                     totalKms: document.getElementById('total-kms'),
@@ -187,7 +184,7 @@
                 },
                 logForm: {
                     form: document.getElementById('fuel-log-form'),
-                    backBtn: document.getElementById('back-to-dashboard-btn'), // (เพิ่ม)
+                    backBtn: document.getElementById('back-to-dashboard-btn'),
                     price: document.getElementById('log-price'),
                     odometer: document.getElementById('log-odometer'),
                     billImage: document.getElementById('log-bill-image'),
@@ -198,7 +195,6 @@
                 }
             };
             
-            // --- MAIN LOGIC ---
             (async function main() {
                 try {
                     dom.loadingText.textContent = 'กำลังเริ่มต้น...';
@@ -214,10 +210,10 @@
                     
                     if (userData.status === 'found') {
                         employeeData = userData.employee; 
-                        showView('dashboard'); // (เปลี่ยน) แสดง Dashboard
-                        await loadDashboardData(); // (เพิ่ม) โหลดข้อมูลสรุป
+                        showView('dashboard');
+                        await loadDashboardData();
                     } else {
-                        showView('registration'); // แสดงหน้าลงทะเบียน (เหมือนเดิม)
+                        showView('registration');
                     }
                     
                     dom.app.classList.remove('hidden');
@@ -225,12 +221,10 @@
 
                 } catch (error) { 
                     showCustomAlert('เกิดข้อผิดพลาดรุนแรง', error.message, false);
-                    dom.loadingView.classList.add('hidden');
                     console.error(error); 
                 }
             })();
 
-            // --- ฟังก์ชัน "หัวใจ" ในการสื่อสารกับ Backend (เหมือนเดิม) ---
             function serverCall(action, ...args) {
                 const url = GAS_WEB_APP_URL; 
                 const payload = { action: action, args: args };
@@ -244,89 +238,101 @@
                 .then(data => { if (data.status === 'error') throw new Error(data.message); return data.response; });
             }
 
-            // --- ฟังก์ชันจัดการการแสดงผลหน้าจอ ---
             function showView(viewName) {
                 Object.values(dom.views).forEach(view => view.classList.add('hidden'));
-                if (dom.views[viewName]) {
-                    dom.views[viewName].classList.remove('hidden');
+                if (dom.views[viewName]) dom.views[viewName].classList.remove('hidden');
+            }
+
+            // ★★★★★ อัปเกรดฟังก์ชันนี้ ★★★★★
+            async function loadDashboardData() {
+                dom.dashboard.totalPrice.textContent = '...';
+                dom.dashboard.totalKms.textContent = '...';
+                const historyContainer = document.getElementById('history-container');
+                historyContainer.innerHTML = '<p>กำลังโหลดประวัติ...</p>';
+                
+                try {
+                    const [summary, history] = await Promise.all([
+                        serverCall('getMonthlySummary', liffProfile.userId),
+                        serverCall('getFuelLogHistory', liffProfile.userId)
+                    ]);
+                    
+                    if (summary.error) throw new Error(summary.error);
+                    
+                    dom.dashboard.totalPrice.textContent = summary.totalPrice > 0 ? summary.totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+                    if (summary.odometerCount < 2) dom.dashboard.totalKms.textContent = 'ต้องมี 2 รายการขึ้นไป';
+                    else dom.dashboard.totalKms.textContent = summary.totalKms > 0 ? summary.totalKms.toLocaleString('th-TH') : '0.00';
+                    
+                    if (history && history.length > 0) {
+                        historyContainer.innerHTML = createHistoryTable(history);
+                    } else {
+                        historyContainer.innerHTML = '<h3 class="card-title" style="margin-top:1.5rem;">ประวัติ 5 รายการล่าสุด</h3><p>ยังไม่มีประวัติการเติมน้ำมัน</p>';
+                    }
+                } catch (error) {
+                    console.error('Dashboard loading error:', error);
+                    dom.dashboard.totalPrice.textContent = 'Error';
+                    dom.dashboard.totalKms.textContent = 'Error';
+                    historyContainer.innerHTML = `<p style="color:var(--danger-color);">ไม่สามารถโหลดประวัติได้: ${error.message}</p>`;
                 }
             }
 
-            // ในส่วน loadDashboardData ของ index.html
-async function loadDashboardData() {
-    dom.dashboard.totalPrice.textContent = '...';
-    dom.dashboard.totalKms.textContent = '...';
-    
-    try {
-        const summary = await serverCall('getMonthlySummary', liffProfile.userId);
-        
-        // ตรวจสอบ error
-        if (summary.error) {
-            throw new Error(summary.error);
-        }
-        
-        // แสดงยอดเติมน้ำมัน
-        dom.dashboard.totalPrice.textContent = summary.totalPrice > 0 ? 
-            summary.totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
-        
-        // แสดงระยะทางด้วยข้อความที่เหมาะสม
-        if (summary.odometerCount === 0) {
-            dom.dashboard.totalKms.textContent = 'ไม่มีข้อมูล';
-        } else if (summary.odometerCount === 1) {
-            dom.dashboard.totalKms.textContent = 'ต้องมี 2 รายการขึ้นไป';
-        } else {
-            dom.dashboard.totalKms.textContent = summary.totalKms > 0 ? 
-                summary.totalKms.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
-        }
-        
-    } catch (error) {
-        console.error('Dashboard loading error:', error);
-        dom.dashboard.totalPrice.textContent = 'Error';
-        dom.dashboard.totalKms.textContent = 'Error';
-        showCustomAlert('โหลดข้อมูลสรุปไม่สำเร็จ', error.message, false);
-    }
-}
+            // ★★★★★ เพิ่มฟังก์ชันใหม่สำหรับสร้างตาราง ★★★★★
+            function createHistoryTable(historyData) {
+                const columns = {
+                    'วันที่': { label: 'วันที่', align: 'left' },
+                    'ราคาที่เติม': { label: 'ราคา (บาท)', align: 'right' },
+                    'เลขไมล์รถยนต์ขณะเติม': { label: 'เลขไมล์ (กม.)', align: 'right' }
+                };
+                
+                const tableHeaders = Object.values(columns).map(c => `<th>${c.label}</th>`).join('');
+
+                const tableRows = historyData.map(record => {
+                    let cells = '';
+                    for (const key in columns) {
+                        const align = columns[key].align;
+                        let value = record[key] || '-';
+                        if (align === 'right' && !isNaN(parseFloat(value))) {
+                            value = parseFloat(value).toLocaleString('th-TH');
+                        }
+                        cells += `<td class="text-${align}">${value}</td>`;
+                    }
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+
+                return `
+                    <h2 class="card-title" style="margin-top: 1.5rem;">ประวัติ 5 รายการล่าสุด</h2>
+                    <div id="history-table-wrapper">
+                        <table class="history-table">
+                            <thead><tr>${tableHeaders}</tr></thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
             
-            // --- จัดการการลงทะเบียน ---
             dom.regForm.form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = dom.regForm.name.value.trim();
                 const licensePlate = dom.regForm.licensePlate.value.trim();
+                if (!name || !licensePlate) return;
                 
-                if (!name || !licensePlate) {
-                    showCustomAlert('ข้อมูลไม่ครบ', 'กรุณากรอกชื่อและทะเบียนรถ', false);
-                    return;
-                }
-                
-                dom.loadingText.textContent = 'กำลังลงทะเบียน...';
                 dom.loadingView.classList.remove('hidden');
-
                 try {
                     const result = await serverCall('registerUser', liffProfile.userId, name, licensePlate);
                     employeeData = result.employee; 
-                    showView('dashboard'); // (เปลี่ยน) สลับไปหน้า Dashboard
-                    await loadDashboardData(); // (เพิ่ม) โหลดข้อมูลสรุปครั้งแรก
-                    dom.loadingView.classList.add('hidden');
+                    showView('dashboard');
+                    await loadDashboardData();
                 } catch (error) {
-                    dom.loadingView.classList.add('hidden');
                     showCustomAlert('ลงทะเบียนไม่สำเร็จ', error.message, false);
+                } finally {
+                    dom.loadingView.classList.add('hidden');
                 }
             });
 
-            // --- (เพิ่ม) ปุ่มนำทางจาก Dashboard ไปหน้า Log ---
-            dom.dashboard.goToLogBtn.addEventListener('click', () => {
-                showView('fuelLog');
-            });
+            dom.dashboard.goToLogBtn.addEventListener('click', () => showView('fuelLog'));
+            dom.logForm.backBtn.addEventListener('click', () => showView('dashboard'));
 
-            // --- (เพิ่ม) ปุ่มย้อนกลับจากหน้า Log ไป Dashboard ---
-            dom.logForm.backBtn.addEventListener('click', () => {
-                showView('dashboard');
-            });
-
-            // --- จัดการการบันทึกข้อมูลน้ำมัน ---
             dom.logForm.form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                // (Logic การตรวจสอบข้อมูลเหมือนเดิม)
                 const price = dom.logForm.price.value;
                 const odometer = dom.logForm.odometer.value;
                 const billFile = dom.logForm.billImage.files[0];
@@ -336,36 +342,26 @@ async function loadDashboardData() {
                     return;
                 }
                 dom.logForm.submitBtn.disabled = true;
-                dom.loadingText.textContent = 'กำลังบันทึกข้อมูล...';
                 dom.loadingView.classList.remove('hidden');
 
                 try {
-                    const billImageBase64 = await readFileAsBase64(billFile);
-                    const odometerImageBase64 = await readFileAsBase64(odometerFile);
+                    const [billImageBase64, odometerImageBase64] = await Promise.all([
+                        readFileAsBase64(billFile),
+                        readFileAsBase64(odometerFile)
+                    ]);
                     
-                    const logData = {
-                        userId: liffProfile.userId,
-                        name: employeeData.name,
-                        licensePlate: employeeData.licensePlate,
-                        price: price,
-                        odometer: odometer,
-                        billImageBase64: billImageBase64,
-                        odometerImageBase64: odometerImageBase64
-                    };
+                    const logData = { userId: liffProfile.userId, name: employeeData.name, licensePlate: employeeData.licensePlate, price, odometer, billImageBase64, odometerImageBase64 };
                     await serverCall('submitFuelLog', logData);
                     
-                    dom.loadingView.classList.add('hidden');
-                    // (เปลี่ยน) แจ้งเตือน และตั้งค่าให้พอกด "ตกลง" หรือครบ 3 วิ แล้วกลับไปหน้า Dashboard
                     showCustomAlert('บันทึกสำเร็จ', 'บันทึกข้อมูลการเติมน้ำมันเรียบร้อยแล้ว', true, 3); 
-                    
                 } catch (error) {
-                    dom.loadingView.classList.add('hidden');
                     dom.logForm.submitBtn.disabled = false;
                     showCustomAlert('บันทึกไม่สำเร็จ', error.message, false);
+                } finally {
+                    dom.loadingView.classList.add('hidden');
                 }
             });
 
-            // --- ฟังก์ชันผู้ช่วย: อ่านไฟล์เป็น Base64 (เหมือนเดิม) ---
             function readFileAsBase64(file) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -375,7 +371,6 @@ async function loadDashboardData() {
                 });
             }
             
-            // --- ฟังก์ชันผู้ช่วย: แสดงตัวอย่างรูปภาพ (เหมือนเดิม) ---
             function setupImagePreview(inputId, previewId) {
                 document.getElementById(inputId).addEventListener('change', (event) => {
                     const file = event.target.files[0];
@@ -391,54 +386,41 @@ async function loadDashboardData() {
             setupImagePreview('log-bill-image', 'bill-preview');
             setupImagePreview('log-odometer-image', 'odometer-preview');
 
-            // --- (อัปเดต) ฟังก์ชันจัดการ Popup Alert ---
             let countdownInterval;
             function showCustomAlert(title, message, isSuccess = false, countdownSeconds = 3) {
                 const overlay = document.getElementById('custom-alert-overlay');
                 const titleEl = document.getElementById('custom-alert-title');
                 const messageEl = document.getElementById('custom-alert-message');
                 const closeBtn = document.getElementById('custom-alert-close-btn');
-
                 titleEl.textContent = title;
                 messageEl.textContent = message;
                 overlay.classList.remove('hidden');
                 clearInterval(countdownInterval);
                 closeBtn.className = 'btn';
-
                 if (isSuccess) {
                     closeBtn.classList.add('btn-primary');
                     let countdown = countdownSeconds;
                     closeBtn.textContent = `ตกลง (ปิดใน ${countdown} วิ)`;
                     countdownInterval = setInterval(() => {
                         countdown--;
-                        if (countdown > 0) {
-                            closeBtn.textContent = `ตกลง (ปิดใน ${countdown} วิ)`;
-                        } else {
-                            handleSuccessAction(); // (เปลี่ยน) เรียกฟังก์ชันเฉพาะเมื่อสำเร็จ
-                        }
+                        if (countdown > 0) closeBtn.textContent = `ตกลง (ปิดใน ${countdown} วิ)`;
+                        else handleSuccessAction();
                     }, 1000);
-                    closeBtn.onclick = handleSuccessAction; // (เปลี่ยน)
+                    closeBtn.onclick = handleSuccessAction;
                 } else {
                     closeBtn.classList.add('btn-warning');
                     closeBtn.textContent = 'ตกลง';
-                    closeBtn.onclick = () => { // ถ้า Error ให้แค่ปิด Popup
-                        overlay.classList.add('hidden');
-                    };
+                    closeBtn.onclick = () => { overlay.classList.add('hidden'); };
                 }
             }
 
-            // (เพิ่ม) ฟังก์ชันที่ทำงานหลังจากบันทึกสำเร็จ
             function handleSuccessAction() {
                 clearInterval(countdownInterval);
                 document.getElementById('custom-alert-overlay').classList.add('hidden');
-                
-                // เคลียร์ฟอร์ม
                 dom.logForm.form.reset();
                 dom.logForm.billPreview.style.display = 'none';
                 dom.logForm.odometerPreview.style.display = 'none';
                 dom.logForm.submitBtn.disabled = false;
-
-                // กลับไปหน้า Dashboard และ โหลดข้อมูลใหม่
                 showView('dashboard');
                 loadDashboardData();
             }
@@ -446,4 +428,3 @@ async function loadDashboardData() {
     </script>
 </body>
 </html>
-
