@@ -252,20 +252,40 @@
                 }
             }
 
-            // --- (เพิ่ม) ฟังก์ชันโหลดข้อมูล Dashboard ---
-            async function loadDashboardData() {
-                dom.dashboard.totalPrice.textContent = '...';
-                dom.dashboard.totalKms.textContent = '...';
-                try {
-                    const summary = await serverCall('getMonthlySummary', liffProfile.userId);
-                    dom.dashboard.totalPrice.textContent = summary.totalPrice.toLocaleString('th-TH') || '0';
-                    dom.dashboard.totalKms.textContent = summary.totalKms.toLocaleString('th-TH') || '0';
-                } catch (error) {
-                    dom.dashboard.totalPrice.textContent = 'Error';
-                    dom.dashboard.totalKms.textContent = 'Error';
-                    showCustomAlert('โหลดข้อมูลสรุปไม่สำเร็จ', error.message, false);
-                }
-            }
+            // ในส่วน loadDashboardData ของ index.html
+async function loadDashboardData() {
+    dom.dashboard.totalPrice.textContent = '...';
+    dom.dashboard.totalKms.textContent = '...';
+    
+    try {
+        const summary = await serverCall('getMonthlySummary', liffProfile.userId);
+        
+        // ตรวจสอบ error
+        if (summary.error) {
+            throw new Error(summary.error);
+        }
+        
+        // แสดงยอดเติมน้ำมัน
+        dom.dashboard.totalPrice.textContent = summary.totalPrice > 0 ? 
+            summary.totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+        
+        // แสดงระยะทางด้วยข้อความที่เหมาะสม
+        if (summary.odometerCount === 0) {
+            dom.dashboard.totalKms.textContent = 'ไม่มีข้อมูล';
+        } else if (summary.odometerCount === 1) {
+            dom.dashboard.totalKms.textContent = 'ต้องมี 2 รายการขึ้นไป';
+        } else {
+            dom.dashboard.totalKms.textContent = summary.totalKms > 0 ? 
+                summary.totalKms.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+        }
+        
+    } catch (error) {
+        console.error('Dashboard loading error:', error);
+        dom.dashboard.totalPrice.textContent = 'Error';
+        dom.dashboard.totalKms.textContent = 'Error';
+        showCustomAlert('โหลดข้อมูลสรุปไม่สำเร็จ', error.message, false);
+    }
+}
             
             // --- จัดการการลงทะเบียน ---
             dom.regForm.form.addEventListener('submit', async (e) => {
